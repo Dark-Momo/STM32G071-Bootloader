@@ -1,32 +1,34 @@
+*/Debug/
+
 # Prerequisites
-*.d
+#*.d
 
 # Object files
 *.o
 *.ko
-*.obj
-*.elf
+#*.obj
+#*.elf
 
 # Linker output
-*.ilk
-*.map
-*.exp
+#*.ilk
+#*.map
+#*.exp
 
 # Precompiled Headers
-*.gch
-*.pch
+#*.gch
+#*.pch
 
 # Libraries
-*.lib
-*.a
-*.la
-*.lo
+#*.lib
+#*.a
+#*.la
+#*.lo
 
 # Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+#*.dll
+#*.so
+#*.so.*
+#*.dylib
 
 # Executables
 *.exe
