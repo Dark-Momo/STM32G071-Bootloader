@@ -53,6 +53,9 @@ unsigned char __attribute__((section(".myBufSectionRAM"))) buf_ram[512];
  */
 const unsigned char __attribute__((section(".myBufSectionFLASH"))) buf_flash[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
+/* For functions in flash*/
+#define LOCATE_FUNC __attribute__((section(".mysection")))
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -65,6 +68,28 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+/* Function in Flash */
+void LOCATE_FUNC Blink(uint32_t dlyticks)
+{
+    HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+    HAL_Delay(dlyticks);
+}
+
+/* Function resides in flash, but will load to RAM during initialization. */
+// void __attribute__((section(".RamFunc"))) TurnOnLED(GPIO_PinState PinState)
+// The __ before and after 'section' doesn't matter.
+void __attribute__((__section__(".RamFunc"))) TurnOnLED(GPIO_PinState PinState)
+{
+	if (PinState != GPIO_PIN_RESET)
+	{
+		LED_GREEN_GPIO_Port->BSRR = (uint32_t)LED_GREEN_Pin;
+	}
+	else
+	{
+		LED_GREEN_GPIO_Port->BRR = (uint32_t)LED_GREEN_Pin;
+	}
+}
 
 /* USER CODE END 0 */
 
@@ -108,6 +133,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  Blink(500);
+	  TurnOnLED(GPIO_PIN_SET);
   }
   /* USER CODE END 3 */
 }

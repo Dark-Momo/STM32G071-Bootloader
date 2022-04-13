@@ -38,7 +38,14 @@ _Min_Stack_Size = 0x400 ;	/* required amount of stack */
 MEMORY
 {
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 36K
-  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 128K
+  
+  /* FLASH doesnot have w since it can not be written directly. */
+  /* FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 128K */
+  
+  /* We divide 128K Flash into 2 regions, thus reduce Flash length. */
+  FLASH       (rx)    : ORIGIN = 0x8000000,   LENGTH = 96K     /* 96K = 0x18000 */
+  MY_MEMORY   (rx)    : ORIGIN = 0x8018000,   LENGTH = 32K
+  
 }
 /* Flash with Read and Execute */
 
@@ -53,19 +60,31 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
   
-  .myBufBlockRAM 0x20000100 (NOLOAD) : /* Start addrss, not the length, of this section. */
-  {
-    KEEP(*(.myBufSectionRAM))           /* Assign this section even if I don't use it. */
-  } > RAM
   /* Without NOLOAD, the binary file STM32G071-Bootloader.bin, from STM32G071-Bootloader.elf -> Right 
    * Click -> Show In -> System Explorer will be 390+MB, while with NOLOAD, only 11KB. 
    * WHY???
    */
-   
-  .myBufBlockFLASH 0x8001000 : /* Start addrss, not the length, of this section. */
+  .myBufBlockRAM 0x20000100 (NOLOAD) : /* Start addrss, not the length, of this section. */
   {
-    KEEP(*(.myBufSectionFLASH))         /* Assign this section even if I don't use it. */
+    KEEP(*(.myBufSectionRAM))          /* Assign this section even if I don't use it. */
+  } > RAM
+
+  .myBufBlockFLASH 0x8001000 :         /* Start addrss, not the length, of this section. Why no NOLOAD here?*/
+  {
+    KEEP(*(.myBufSectionFLASH))        /* Assign this section even if I do not use it. */
   } > FLASH
+  
+  /* section defined in Video 2 */ 
+  .mysection :
+  {
+    . = ALIGN(4);
+    __mysection_start__ = .;
+    *(.mysection*)              /* An alias of mysection */
+    __mysection_end__   = .;    /* start and end is determined by real usage. */
+  } > MY_MEMORY
+  
+  /* Check whether MY_MEMORY real usage exceeds its claimed size */
+  ASSERT(LENGTH(MY_MEMORY) >= (__mysection_end__ - __mysection_start__), "MY_MEMORY LENGTH OVERFLOW!")
   
   /* The program code and other data into "FLASH" Rom type memory */
   .text :
@@ -153,7 +172,12 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
 
   } >RAM AT> FLASH
-
+  /* .data section will appear in both of Build Analyzer -> Memory Details -> FLASH and RAM.
+   * There, its sub-sections will have a Load Address which is in Flash, and a Run 
+   * Address which is in RAM.
+   * That is why it is Initialized data sections.
+   */
+  
   /* Uninitialized data section into "RAM" Ram type memory */
   . = ALIGN(4);
   .bss :
