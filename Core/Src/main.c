@@ -37,6 +37,11 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
+/* Below defines a function pointer called ptrF, with return type void,
+ * and a argument of uint32_t.
+ */
+typedef void (*ptrF)(uint32_t dlyticks);
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -63,6 +68,12 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
+void LOCATE_FUNC Blink(uint32_t dlyticks);
+
+static ptrF Functions[] =
+{
+    Blink
+};
 
 /* USER CODE END PFP */
 
@@ -133,7 +144,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  Blink(500);
+	  // Blink(500);
+	  (*Functions[0])(500);
 	  TurnOnLED(GPIO_PIN_SET);
   }
   /* USER CODE END 3 */

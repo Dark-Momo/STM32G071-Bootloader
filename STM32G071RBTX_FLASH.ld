@@ -66,7 +66,7 @@ SECTIONS
    */
   .myBufBlockRAM 0x20000100 (NOLOAD) : /* Start addrss, not the length, of this section. */
   {
-    KEEP(*(.myBufSectionRAM))          /* Assign this section even if I don't use it. */
+    KEEP(*(.myBufSectionRAM))          /* Assign this section even if I do not use it. */
   } > RAM
 
   .myBufBlockFLASH 0x8001000 :         /* Start addrss, not the length, of this section. Why no NOLOAD here?*/
@@ -158,6 +158,11 @@ SECTIONS
   /* Used by the startup to initialize data */
   _sidata = LOADADDR(.data);
 
+  /* .data section below will appear in both of Build Analyzer -> Memory Details -> FLASH and RAM.
+   * There, its sub-sections will have a Load Address which is in Flash, and a Run 
+   * Address which is in RAM.
+   * That is why it is Initialized data sections.
+   */
   /* Initialized data sections into "RAM" Ram type memory */
   .data :
   {
@@ -172,11 +177,6 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
 
   } >RAM AT> FLASH
-  /* .data section will appear in both of Build Analyzer -> Memory Details -> FLASH and RAM.
-   * There, its sub-sections will have a Load Address which is in Flash, and a Run 
-   * Address which is in RAM.
-   * That is why it is Initialized data sections.
-   */
   
   /* Uninitialized data section into "RAM" Ram type memory */
   . = ALIGN(4);
