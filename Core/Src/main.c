@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,12 +42,16 @@
  */
 typedef void (*ptrF)(uint32_t dlyticks);
 
+typedef void (*pFunction)(void);
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+
+#ifdef FIRST_VIDEO
 unsigned char __attribute__((section(".myBufSectionRAM"))) buf_ram[512];
 
 /* If you want to see below 10 pre-set data, you need to :
@@ -57,9 +61,20 @@ unsigned char __attribute__((section(".myBufSectionRAM"))) buf_ram[512];
  *    is the assigned address in linker file.
  */
 const unsigned char __attribute__((section(".myBufSectionFLASH"))) buf_flash[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+#endif
 
 /* For functions in flash*/
 #define LOCATE_FUNC __attribute__((section(".mysection")))
+
+/* We just divided flash into 3 region:
+ * (1) FLASH :     0x8000000 - 0x8008000,   LENGTH = 32K
+ * (2) TBD
+ * (3) MY_MEMORY : 0x8018000 - 0x8020000,   LENGTH = 32K */
+
+/* 0x8000 = 32k Offset (of Flash), the 2nd region in memory define for APP. */
+#define FLASH_APP_ADDR 0x8008000
+
+void go2APP(void);
 
 /* USER CODE END PV */
 
@@ -70,10 +85,12 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void LOCATE_FUNC Blink(uint32_t dlyticks);
 
+#ifdef FIRST_VIDEO
 static ptrF Functions[] =
 {
     Blink
 };
+#endif
 
 /* USER CODE END PFP */
 
@@ -85,6 +102,47 @@ void LOCATE_FUNC Blink(uint32_t dlyticks)
 {
     HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
     HAL_Delay(dlyticks);
+}
+
+// Before jumping to app, we should disable all IRQs and clear pending IRQs.
+void go2APP(void)
+{
+	uint32_t JumpAddress;
+	pFunction Jump_To_Application;
+
+	printf("BOOTLOADER Start \r\n");
+
+	// Check if there is something installed in the 'App' region in flash.
+	if (((*(uint32_t *)FLASH_APP_ADDR) & 0x2FFE0000) == 0x20000000)
+	{
+		printf("App Start \r\n");
+		HAL_Delay(100);
+
+		// Get data in second 32-bit in app section. First executable address.
+		JumpAddress = *(uint32_t *)(FLASH_APP_ADDR + 4);
+		Jump_To_Application = (pFunction)JumpAddress;
+
+		// Initialize app's stack pointer
+		__set_MSP(*(uint32_t *)FLASH_APP_ADDR);
+		Jump_To_Application();
+	}
+	else
+	{
+		printf("No App Found \r\n");
+		// HAL_Delay(1000);
+	}
+}
+// Below id for using printf() embedded in CubeIDE serial terminal.
+int _write(int file, char *ptr, int len)
+{
+    int DataIdx;
+
+    for (DataIdx = 0; DataIdx < len; DataIdx++)
+    {
+    	HAL_UART_Transmit(&huart2, (uint8_t *)ptr++, 1, 10);
+    }
+
+    return len;
 }
 
 /* Function resides in flash, but will load to RAM during initialization. */
@@ -145,7 +203,10 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  // Blink(500);
+#ifdef FIRST_VIDEO
 	  (*Functions[0])(500);
+#endif
+	  go2APP();
 	  TurnOnLED(GPIO_PIN_SET);
   }
   /* USER CODE END 3 */

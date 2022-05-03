@@ -42,8 +42,12 @@ MEMORY
   /* FLASH doesnot have w since it can not be written directly. */
   /* FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 128K */
   
-  /* We divide 128K Flash into 2 regions, thus reduce Flash length. */
-  FLASH       (rx)    : ORIGIN = 0x8000000,   LENGTH = 96K     /* 96K = 0x18000 */
+  /* We divide 128K (0x20000) Flash into 2 regions, thus reduce Flash length. */
+  /* 32K = 0x8000, 96K = 0x18000 */
+  
+  /* First 32K of Flash, where Bootloader is. */   
+  FLASH       (rx)    : ORIGIN = 0x8000000,   LENGTH = 32K
+  
   MY_MEMORY   (rx)    : ORIGIN = 0x8018000,   LENGTH = 32K
   
 }
