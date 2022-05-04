@@ -105,6 +105,7 @@ void LOCATE_FUNC Blink(uint32_t dlyticks)
 }
 
 // Before jumping to app, we should disable all IRQs and clear pending IRQs.
+// Print content at (FLASH_APP_ADDR) and (FLASH_APP_ADDR + 4).
 void go2APP(void)
 {
 	uint32_t JumpAddress;
